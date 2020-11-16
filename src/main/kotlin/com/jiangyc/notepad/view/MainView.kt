@@ -1,18 +1,16 @@
 package com.jiangyc.notepad.view
 
-import javafx.print.PageOrientation
-import javafx.print.Paper
-import javafx.print.Printer
 import javafx.print.PrinterJob
 import javafx.scene.control.*
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCombination
 import javafx.scene.layout.BorderPane
 import javafx.scene.layout.FlowPane
-import javafx.scene.transform.Scale
 import javafx.stage.FileChooser
 import tornadofx.*
+import java.awt.Desktop
 import java.io.File
+import java.net.URI
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -154,33 +152,23 @@ class MainView : View() {
                         separator()
                         item(messages["menu.file.pageSettings"]) {
                             isMnemonicParsing = true
-                            isDisable = Printer.getDefaultPrinter() == null
 
                             action {
-                                val printer = Printer.getDefaultPrinter()
-                                val pageLayout = printer.createPageLayout(Paper.A4, PageOrientation.PORTRAIT, Printer.MarginType.DEFAULT)
-                                val scaleX = pageLayout.printableWidth / editor.boundsInParent.width
-                                val scaleY = pageLayout.printableHeight / editor.boundsInParent.height
-                                editor.transforms.add(Scale(scaleX, scaleY))
-
-                                PrinterJob.createPrinterJob()?.printer
+                                val printerJob = PrinterJob.createPrinterJob()
+                                val success = printerJob?.showPageSetupDialog(primaryStage)?:false
+                                if (success) {
+                                    printerJob.endJob()
+                                }
                             }
                         }
                         item(messages["menu.file.print"]) {
                             isMnemonicParsing = true
-                            isDisable = Printer.getDefaultPrinter() == null
 
                             action {
-                                val printer = Printer.getDefaultPrinter()
-                                val pageLayout = printer.createPageLayout(Paper.A4, PageOrientation.PORTRAIT, Printer.MarginType.DEFAULT)
-                                val scaleX = pageLayout.printableWidth / editor.boundsInParent.width
-                                val scaleY = pageLayout.printableHeight / editor.boundsInParent.height
-                                editor.transforms.add(Scale(scaleX, scaleY))
-
-                                PrinterJob.createPrinterJob()?.let {
-                                    if (it.printPage(editor)) {
-                                        it.endJob()
-                                    }
+                                val printerJob = PrinterJob.createPrinterJob()
+                                val success = printerJob?.showPrintDialog(primaryStage)?:false
+                                if (success) {
+                                    printerJob.endJob()
                                 }
                             }
                         }
@@ -230,7 +218,11 @@ class MainView : View() {
                         }
                         separator()
                         item(messages["menu.edit.bingSearch"], KeyCombination.keyCombination("Ctrl + E")) {
-                            isDisable = true
+                            action {
+                                if (editor.selectedText.isNotEmpty()) {
+                                    Desktop.getDesktop().browse(URI("https://bing.com/search?q=" + editor.selectedText))
+                                }
+                            }
                         }
                         item(messages["menu.edit.find"], KeyCombination.keyCombination("Ctrl + F")) {
                             isMnemonicParsing = true
